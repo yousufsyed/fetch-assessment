@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Fetch Rewards</string>
+
+    <string name="retry">Retry</string>
+    <string name="loading_message">Loading fetch results…</string>
+    <string name="empty_results_message">No results found.</string>
+    <string name="error_message">Error fetching results.</string>
+    <string name="section_header">List %1$d</string>
+    <string name="network_error_message">Failed to get results from network.</string>
+    <string name="parse_error_message">Received results are invalid.</string>
+    <string name="unknown_error_message">An unknown error occurred.</string>
+</resources>

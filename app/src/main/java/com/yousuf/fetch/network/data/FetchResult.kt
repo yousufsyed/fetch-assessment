@@ -1,5 +1,6 @@
 package com.yousuf.fetch.network.data
 
+import com.yousuf.fetch.network.FetchError.ParseError
 import okhttp3.ResponseBody
 import org.json.JSONArray
 import kotlin.Int
@@ -41,7 +42,7 @@ fun ResponseBody.toFetchResults(): List<FetchResult> {
                 )
             )
     } catch (e: Exception) {
-        throw FetchParseException()
+        throw ParseError()
     }
 
 }

@@ -1,5 +1,6 @@
 package com.yousuf.fetch.ui.screen
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +37,7 @@ fun ErrorScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = errorMessage.value,
+            text = stringResource(id = errorMessage.intValue.toErrorMessage),
             fontSize = 14.sp,
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.error
@@ -52,4 +54,12 @@ fun ErrorScreen(
             Text(text = stringResource(id = R.string.retry))
         }
     }
+}
+
+val Int.toErrorMessage
+    get() = when (this) {
+    400 -> R.string.network_error_message
+    300 -> R.string.parse_error_message
+    100 -> R.string.unknown_error_message
+    else -> R.string.empty_error_message
 }

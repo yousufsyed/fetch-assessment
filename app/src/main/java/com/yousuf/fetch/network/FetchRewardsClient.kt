@@ -1,5 +1,6 @@
 package com.yousuf.fetch.network
 
+import com.yousuf.fetch.network.FetchError.NetworkError
 import com.yousuf.fetch.network.data.FetchParseException
 import com.yousuf.fetch.network.data.FetchResult
 import com.yousuf.fetch.network.data.toFetchResults
@@ -27,22 +28,19 @@ class DefaultFetchRewardsClient @Inject constructor(
                     if (response.isSuccessful && response.body() != null) {
                         response.body()!!.toFetchResults()
                     } else {
-                        // for now just throwing an exception if the api response is failure,
-                        // this can be refined to handle different type of errors
-                        throw FetchDataException()
+                        throw NetworkError()
                     }
                 }
-            } catch (e: FetchDataException) {
-                throw e
-            } catch (e: FetchParseException) {
-                throw e
-            } catch (e: Exception) {
-                throw FetchNetworkException()
+            } catch (fpe: FetchParseException) {
+                throw fpe
+            } catch (io: Exception) {
+                throw NetworkError()
             }
         }
     }
 }
-
-class FetchDataException() : RuntimeException("Failed to fetch results.")
-class FetchNetworkException() :
-    RuntimeException("Network error occurred while trying to fetch results.")
+sealed class FetchError(val code: Int) : RuntimeException() {
+    class ParseError() : FetchError(300) //"Failed to parse response")
+    class NetworkError() : FetchError(400) //"Failed to fetch results from network"
+    class UnknownError() : FetchError(100) //"An unknown error occurred"
+}

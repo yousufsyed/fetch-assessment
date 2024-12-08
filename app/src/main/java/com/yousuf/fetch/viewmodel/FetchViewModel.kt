@@ -1,12 +1,14 @@
 package com.yousuf.fetch.viewmodel
 
 import android.os.Parcelable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yousuf.fetch.data.FetchData
 import com.yousuf.fetch.data.toFetchData
+import com.yousuf.fetch.network.FetchError
 import com.yousuf.fetch.network.data.FetchResult
 import com.yousuf.fetch.provider.FetchProvider
 import com.yousuf.fetch.viewmodel.FetchState.Empty
@@ -14,6 +16,9 @@ import com.yousuf.fetch.viewmodel.FetchState.Loading
 import com.yousuf.fetch.viewmodel.FetchState.Success
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
@@ -70,8 +75,11 @@ class FetchViewModel @Inject constructor(
                 }.let {
                     if (it.isEmpty()) Empty else Success
                 }
+        } catch (e: FetchError) {
+            errorMessage.intValue = e.code
+            FetchState.Error
         } catch (e: Exception) {
-            errorMessage.value = e.message ?: "Unknown Error"
+            errorMessage.intValue = 100
             FetchState.Error
         }
 
@@ -97,12 +105,12 @@ class FetchViewModel @Inject constructor(
 
     private fun initLoadingState() {
         fetchState.value = Loading
-        errorMessage.value = ""
+        errorMessage.intValue = 0
         canRetry.value = false
     }
 
-    private fun getSavedErrorCode() = mutableStateOf(
-        savedStateHandle.get<String>("errorCode") ?: ""
+    private fun getSavedErrorCode() = mutableIntStateOf(
+        savedStateHandle.get<Int>("errorCode") ?: 0
     )
 
     private fun getSavedFetchResults() = mutableStateOf(
@@ -110,7 +118,7 @@ class FetchViewModel @Inject constructor(
     )
 
     private fun saveResults() {
-        savedStateHandle["errorCode"] = errorMessage.value
+        savedStateHandle["errorCode"] = errorMessage.intValue
         savedStateHandle["fetchResults"] = fetchResults.value
     }
 }

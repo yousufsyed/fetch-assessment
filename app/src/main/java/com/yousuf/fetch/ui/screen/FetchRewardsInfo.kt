@@ -25,7 +25,7 @@ fun FetchRewardsInfo(
     contentAlignment = Alignment.Center,
 ) {
     LaunchedEffect(viewModel) {
-        if (viewModel.fetchState.value == FetchState.Init) {
+        if(viewModel.fetchState.value == FetchState.Init) {
             viewModel.fetchRewards()
         }
     }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,9 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.yousuf.fetch.ui.screen.FetchInfo
+import com.yousuf.fetch.ui.screen.FetchRewardsInfo
 import com.yousuf.fetch.ui.theme.FetchAssesmentTheme
 import com.yousuf.fetch.viewmodel.FetchViewModel
 import com.yousuf.weatherapp.provider.MessageDelegate
@@ -52,10 +50,10 @@ class MainActivity : ComponentActivity() {
                     topBar = { Appbar() },
                     snackbarHost = { SnackbarHost(snackbarHostState) }
                 ) { innerPadding ->
-                    FetchInfo(
+                    FetchRewardsInfo(
                         modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                            .fillMaxSize()
+                            .padding(innerPadding)
                     )
                 }
             }
@@ -68,7 +66,7 @@ fun HandleSnackbar(snackbarHostState: SnackbarHostState) {
 
     val scope = rememberCoroutineScope()
 
-    ObserveAsEvents( flow = MessageDelegate.events, snackbarHostState) { event ->
+    ObserveAsEvents(flow = MessageDelegate.events, snackbarHostState) { event ->
         scope.launch {
             snackbarHostState.currentSnackbarData?.dismiss()
             val result = snackbarHostState.showSnackbar(
@@ -87,7 +85,7 @@ fun HandleSnackbar(snackbarHostState: SnackbarHostState) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Appbar(viewModel: FetchViewModel = hiltViewModel()) {
+private fun Appbar(viewModel: FetchViewModel = hiltViewModel(key = "fetch")) {
     TopAppBar(
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.primary),

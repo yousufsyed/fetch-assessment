@@ -12,7 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -27,14 +27,15 @@ import com.yousuf.fetch.viewmodel.FetchViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FetchScreen(
-    viewModel: FetchViewModel = hiltViewModel()
+fun FetchRewardsScreen(
+    viewModel: FetchViewModel = hiltViewModel(key = "fetch")
 ) {
-    val list = remember { viewModel.fetchResults.value }
+    val list = rememberSaveable { viewModel.fetchResults.value }
 
     LazyColumn(
         contentPadding = PaddingValues(8.dp),
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .padding(8.dp)
     ) {
 
@@ -43,14 +44,15 @@ fun FetchScreen(
             when (fetchData) {
                 is Header -> {
                     stickyHeader {
-                        Row(modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer)
 
                         ) {
                             Text(
-                                text = stringResource(R.string.section_header,  fetchData.listId),
+                                text = stringResource(R.string.section_header, fetchData.listId),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(12.dp)
@@ -64,7 +66,8 @@ fun FetchScreen(
                         Text(
                             fetchData.name,
                             fontSize = 16.sp,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.background)
                                 .padding(start = 32.dp, top = 12.dp, end = 12.dp, bottom = 12.dp)
                         )

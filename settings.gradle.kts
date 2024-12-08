@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FetchAssesment"
+rootProject.name = "FetchRewards"
 include(":app")

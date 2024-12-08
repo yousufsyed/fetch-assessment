@@ -6,7 +6,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,46 +17,27 @@ import com.yousuf.fetch.viewmodel.FetchState
 import com.yousuf.fetch.viewmodel.FetchViewModel
 
 @Composable
-fun FetchInfo(
+fun FetchRewardsInfo(
     modifier: Modifier = Modifier,
-    viewModel: FetchViewModel = hiltViewModel()
+    viewModel: FetchViewModel = hiltViewModel(key = "fetch")
 ) = Box(
     modifier = modifier,
     contentAlignment = Alignment.Center,
 ) {
-    // upon launch, fetch the data from the network
-    LaunchedEffect("fetch") { viewModel.getFetchResults() }
-
-    val savableState = listSaver<FetchState, Any>(
-        save = {
-            when (it) {
-                FetchState.Loading -> listOf("Loading")
-                is FetchState.Error -> listOf("Error")
-                is FetchState.Empty -> listOf("Empty")
-                is FetchState.Success -> listOf("Success")
-            }
-        },
-        restore = {
-            when (it[0]) {
-                "Error" -> FetchState.Error
-                "Success" -> FetchState.Success
-                "Empty" -> FetchState.Empty
-                else -> FetchState.Loading
-            }
+    LaunchedEffect(viewModel) {
+        if (viewModel.fetchState.value == FetchState.Init) {
+            viewModel.fetchRewards()
         }
-    )
-    val state by rememberSaveable(
-        stateSaver = savableState,
-        init = { viewModel.fetchState }
-    )
-
-    when (state) {
-        FetchState.Loading -> LoadingScreen()
-        FetchState.Success -> FetchScreen()
-        FetchState.Empty -> EmptyScreen()
-        FetchState.Error -> ErrorScreen()
     }
 
+    val state by rememberSaveable { viewModel.fetchState }
+
+    when (state) {
+        FetchState.Success -> FetchRewardsScreen()
+        FetchState.Empty -> EmptyScreen()
+        FetchState.Error -> ErrorScreen()
+        else -> LoadingScreen()
+    }
 }
 
 /**

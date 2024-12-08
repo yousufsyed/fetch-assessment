@@ -1,8 +1,8 @@
 package com.yousuf.fetch.ui.screen
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -21,7 +21,9 @@ import com.yousuf.fetch.R
 import com.yousuf.fetch.viewmodel.FetchViewModel
 
 @Composable
-fun ErrorScreen(viewModel: FetchViewModel = hiltViewModel()) {
+fun ErrorScreen(
+    viewModel: FetchViewModel = hiltViewModel(key = "fetch")
+) {
 
     val errorMessage = rememberSaveable("error") { viewModel.errorMessage }
 
@@ -32,22 +34,22 @@ fun ErrorScreen(viewModel: FetchViewModel = hiltViewModel()) {
         horizontalAlignment = Alignment.Companion.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        AnimatedVisibility(errorMessage.value.isNotEmpty()) {
-            Text(
-                text = errorMessage.value,
-                fontSize = 14.sp,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.error
-                )
+        Text(
+            text = errorMessage.value,
+            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.error
             )
+        )
 
-            Button(
-                modifier = Modifier.padding(top = 16.dp),
-                enabled = remember { viewModel.canRetry.value },
-                onClick = { viewModel.retry() }
-            ) {
-                Text(text = stringResource(id = R.string.retry))
-            }
+        Spacer(modifier = Modifier.padding(8.dp))
+
+        Button(
+            modifier = Modifier.padding(top = 8.dp),
+            enabled = remember { viewModel.canRetry.value },
+            onClick = { viewModel.retry() }
+        ) {
+            Text(text = stringResource(id = R.string.retry))
         }
     }
 }

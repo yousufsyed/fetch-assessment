@@ -15,69 +15,60 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.yousuf.fetch.provider.FetchEventLogger
+import com.yousuf.fetch.provider.LocalFetchEventLogger
+import com.yousuf.fetch.provider.LocalMessageDelegate
+import com.yousuf.fetch.provider.SnackbarDelegate
+import com.yousuf.fetch.ui.eventHandler.HandleEventLogger
+import com.yousuf.fetch.ui.eventHandler.HandleSnackbar
 import com.yousuf.fetch.ui.screen.FetchRewardsInfo
 import com.yousuf.fetch.ui.theme.FetchAssesmentTheme
 import com.yousuf.fetch.viewmodel.FetchViewModel
-import com.yousuf.weatherapp.provider.MessageDelegate
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var eventLogger: FetchEventLogger
+    @Inject
+    lateinit var snackbarEventDelegate: SnackbarDelegate
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             FetchAssesmentTheme {
-                val snackbarHostState = remember { SnackbarHostState() }
-                HandleSnackbar(snackbarHostState)
-                Scaffold(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background),
-                    topBar = { Appbar() },
-                    snackbarHost = { SnackbarHost(snackbarHostState) }
-                ) { innerPadding ->
-                    FetchRewardsInfo(
+                RegisterProviders(eventLogger, snackbarEventDelegate) {
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    HandleSnackbar(snackbarHostState)
+                    HandleEventLogger()
+                    Scaffold(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
-                    )
+                            .background(color = MaterialTheme.colorScheme.background),
+                        topBar = { Appbar() },
+                        snackbarHost = { SnackbarHost(snackbarHostState) }
+                    ) { innerPadding ->
+                        FetchRewardsInfo(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        )
+                    }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun HandleSnackbar(snackbarHostState: SnackbarHostState) {
-
-    val scope = rememberCoroutineScope()
-
-    ObserveAsEvents(flow = MessageDelegate.events, snackbarHostState) { event ->
-        scope.launch {
-            snackbarHostState.currentSnackbarData?.dismiss()
-            val result = snackbarHostState.showSnackbar(
-                message = event.message,
-                actionLabel = event.action?.name,
-                duration = SnackbarDuration.Short
-            )
-
-            when (result) {
-                SnackbarResult.ActionPerformed -> event.action?.action?.invoke()
-                SnackbarResult.Dismissed -> {}
             }
         }
     }
@@ -112,5 +103,21 @@ private fun Appbar(viewModel: FetchViewModel = hiltViewModel(key = "fetch")) {
                 )
             }
         }
+    )
+}
+
+/**
+ * Register providers for the app that can be used by composable via LocalProviders
+ */
+@Composable
+fun RegisterProviders(
+    eventLogger: FetchEventLogger,
+    snackbarEventDelegate: SnackbarDelegate,
+    content: @Composable () -> Unit
+) {
+    CompositionLocalProvider(
+        LocalFetchEventLogger provides eventLogger,
+        LocalMessageDelegate provides snackbarEventDelegate,
+        content = content
     )
 }

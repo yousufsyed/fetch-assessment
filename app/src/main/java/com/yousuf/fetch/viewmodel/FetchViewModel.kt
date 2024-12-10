@@ -10,15 +10,13 @@ import com.yousuf.fetch.data.FetchData
 import com.yousuf.fetch.data.toFetchData
 import com.yousuf.fetch.network.FetchError
 import com.yousuf.fetch.network.data.FetchResult
+import com.yousuf.fetch.provider.FetchEventLogger
 import com.yousuf.fetch.provider.FetchProvider
 import com.yousuf.fetch.viewmodel.FetchState.Empty
 import com.yousuf.fetch.viewmodel.FetchState.Loading
 import com.yousuf.fetch.viewmodel.FetchState.Success
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
@@ -30,6 +28,7 @@ typealias RewardsAction = suspend () -> List<FetchResult>
 @HiltViewModel
 class FetchViewModel @Inject constructor(
     private val fetchProvider: FetchProvider,
+    private val fetchEventLogger: FetchEventLogger,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -45,11 +44,20 @@ class FetchViewModel @Inject constructor(
     var fetchState = mutableStateOf<FetchState>(FetchState.Init)
         private set
 
-    fun fetchRewards() = getRewards { fetchProvider.getRewards() }
+    fun fetchRewards() {
+        fetchEventLogger.logInfo("fetching rewards...")
+        getRewards { fetchProvider.getRewards() }
+    }
 
-    fun refresh() = getRewards { fetchProvider.getRewardsFromNetwork() }
+    fun refresh() {
+        fetchEventLogger.logInfo("refresh...")
+        getRewards { fetchProvider.getRewardsFromNetwork() }
+    }
 
-    fun retry() = getRewards { fetchProvider.getRewardsFromNetwork() }
+    fun retry() {
+        fetchEventLogger.logInfo("retrying...")
+        getRewards { fetchProvider.getRewardsFromNetwork() }
+    }
 
     /**
      * Fetch results from provider,
@@ -73,13 +81,27 @@ class FetchViewModel @Inject constructor(
                 .apply {
                     fetchResults.value = this.toFetchData()
                 }.let {
-                    if (it.isEmpty()) Empty else Success
+                    if (it.isEmpty()) {
+                        fetchEventLogger.logInfo("received empty results...")
+                        fetchEventLogger.logInfo("transitioning to Empty state...")
+                        Empty
+                    } else {
+                        fetchEventLogger.logInfo("received results...")
+                        fetchEventLogger.logInfo("transitioning to Success state...")
+                        Success
+                    }
                 }
         } catch (e: FetchError) {
+            fetchEventLogger.logError("received error results..., ${e.message.orEmpty()}")
             errorMessage.intValue = e.code
+
+            fetchEventLogger.logInfo("transitioning to Error state...")
             FetchState.Error
         } catch (e: Exception) {
+            fetchEventLogger.logError("received error results..., ${e.message.orEmpty()}")
             errorMessage.intValue = 100
+
+            fetchEventLogger.logInfo("transitioning to Error state...")
             FetchState.Error
         }
 
@@ -95,6 +117,7 @@ class FetchViewModel @Inject constructor(
             // upon retry, the transition is too fast, producing a flickering effect.
             // so introducing a delay to ensure the transition is smooth.
             delay(1000)
+            fetchEventLogger.logInfo("mimic delay for smoother state transition...")
         }
         fetchState.value = state
     }
@@ -104,6 +127,7 @@ class FetchViewModel @Inject constructor(
     }
 
     private fun initLoadingState() {
+        fetchEventLogger.logInfo("transitioning to loading state...")
         fetchState.value = Loading
         errorMessage.intValue = 0
         canRetry.value = false
@@ -118,6 +142,7 @@ class FetchViewModel @Inject constructor(
     )
 
     private fun saveResults() {
+        fetchEventLogger.logInfo("saving results to savedStateHandler")
         savedStateHandle["errorCode"] = errorMessage.intValue
         savedStateHandle["fetchResults"] = fetchResults.value
     }

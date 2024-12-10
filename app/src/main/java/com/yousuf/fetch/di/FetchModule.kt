@@ -4,35 +4,26 @@ import com.yousuf.fetch.network.DefaultFetchRewardsClient
 import com.yousuf.fetch.network.FetchRewardsClient
 import com.yousuf.fetch.network.FetchRewardsService
 import com.yousuf.fetch.provider.DefaultDispatcherProvider
+import com.yousuf.fetch.provider.DefaultFetchEventLogger
 import com.yousuf.fetch.provider.DefaultFetchProvider
+import com.yousuf.fetch.provider.DefaultSnackbarDelegate
 import com.yousuf.fetch.provider.DispatcherProvider
+import com.yousuf.fetch.provider.FetchEventLogger
 import com.yousuf.fetch.provider.FetchProvider
+import com.yousuf.fetch.provider.LogEvent
+import com.yousuf.fetch.provider.SnackbarDelegate
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.channels.Channel
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
-@Module
+@Module (includes = [EventsModule::class, NetworkModule::class])
 @InstallIn(SingletonComponent::class)
 class FetchModule {
-
-    @Provides
-    @Singleton
-    fun providesRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl("https://fetch-hiring.s3.amazonaws.com")
-        .client(OkHttpClient.Builder().build())
-        .build()
-
-    @Provides
-    fun provideFetchService(retrofit: Retrofit): FetchRewardsService {
-        return retrofit.create(FetchRewardsService::class.java)
-    }
-
-    @Provides
-    fun provideFetchClient(impl: DefaultFetchRewardsClient): FetchRewardsClient = impl
 
     @Provides
     @Singleton

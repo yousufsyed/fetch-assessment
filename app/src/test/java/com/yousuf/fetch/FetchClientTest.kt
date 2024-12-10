@@ -1,10 +1,11 @@
 package com.yousuf.fetch
 
 import com.yousuf.fetch.network.DefaultFetchRewardsClient
-import com.yousuf.fetch.network.FetchDataException
+import com.yousuf.fetch.network.FetchError
 import com.yousuf.fetch.network.FetchRewardsClient
 import com.yousuf.fetch.network.FetchRewardsService
 import com.yousuf.fetch.provider.DispatcherProvider
+import com.yousuf.fetch.provider.FetchEventLogger
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +29,7 @@ class FetchClientTest {
     private val mockWebServer = MockWebServer()
     private lateinit var fetchRewardsService: FetchRewardsService
     private lateinit var fetchRewardsClient: FetchRewardsClient
+    private val fetchEventLogger = mockk<FetchEventLogger>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val dispatcherProvider = mockk<DispatcherProvider> {
@@ -49,7 +51,7 @@ class FetchClientTest {
             .build()
             .create(FetchRewardsService::class.java)
 
-        fetchRewardsClient = DefaultFetchRewardsClient(dispatcherProvider, fetchRewardsService)
+        fetchRewardsClient = DefaultFetchRewardsClient(dispatcherProvider, fetchRewardsService, fetchEventLogger)
     }
 
 
@@ -58,7 +60,7 @@ class FetchClientTest {
         mockWebServer.shutdown()
     }
 
-    @Test(expected = FetchDataException::class)
+    @Test(expected = FetchError.NetworkError::class)
     fun testFetchResultFailure() {
         runBlocking {
             MockResponse().setResponseCode(404).also {

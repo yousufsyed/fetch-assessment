@@ -18,7 +18,8 @@ interface FetchProvider {
 }
 
 class DefaultFetchProvider @Inject constructor(
-    private val fetchRewardsClient: FetchRewardsClient
+    private val fetchRewardsClient: FetchRewardsClient,
+    private val fetchEventLogger: FetchEventLogger
 ) : FetchProvider {
 
     private var fetchResultCache: List<FetchResult>? = null
@@ -28,18 +29,25 @@ class DefaultFetchProvider @Inject constructor(
     }
 
     override suspend fun getRewardsFromNetwork(): List<FetchResult> {
+        fetchEventLogger.logDebug("fetching results from network")
         return fetchRewardsClient.fetchRewards().apply {
+            fetchEventLogger.logDebug("received parsed results from client")
             saveResults(this)
         }
     }
 
     private fun getResultsFromCache(): List<FetchResult>? {
-        return fetchResultCache
+        return fetchResultCache?.also {
+            fetchEventLogger.logDebug("returning results from cache")
+        }
     }
 
     private fun saveResults(results: List<FetchResult>) {
+        fetchEventLogger.logDebug("saving results to cache")
         fetchResultCache = results
+
         // Todo save results to db
+        // eventLogger.sendLogDebug("saving results to db")
     }
 
 }

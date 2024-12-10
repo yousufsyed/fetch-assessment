@@ -2,6 +2,7 @@ package com.yousuf.fetch
 
 import com.yousuf.fetch.network.FetchRewardsClient
 import com.yousuf.fetch.provider.DefaultFetchProvider
+import com.yousuf.fetch.provider.FetchEventLogger
 import com.yousuf.fetch.provider.FetchProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,11 +17,12 @@ class FetchProviderTest {
 
     private lateinit var fetchProvider: FetchProvider
     private lateinit var fetchRewardsClient: FetchRewardsClient
+    private val fetchEventLogger = mockk<FetchEventLogger>()
 
     @Before
     fun setup() {
         fetchRewardsClient = mockk()
-        fetchProvider = DefaultFetchProvider(fetchRewardsClient)
+        fetchProvider = DefaultFetchProvider(fetchRewardsClient, fetchEventLogger)
     }
 
     @Test

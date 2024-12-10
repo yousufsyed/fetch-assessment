@@ -3,6 +3,7 @@ package com.yousuf.fetch
 import android.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.SavedStateHandle
 import com.yousuf.fetch.network.data.FetchResult
+import com.yousuf.fetch.provider.FetchEventLogger
 import com.yousuf.fetch.provider.FetchProvider
 import com.yousuf.fetch.viewmodel.FetchState
 import com.yousuf.fetch.viewmodel.FetchViewModel
@@ -30,11 +31,13 @@ class FetchViewModelTest {
     private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var viewModel: FetchViewModel
 
+    private val fetchEventLogger = mockk<FetchEventLogger>()
+
     @Before
     fun setup() {
         savedStateHandle = SavedStateHandle()
         fetchProvider = mockk<FetchProvider>()
-        viewModel = FetchViewModel(fetchProvider, savedStateHandle)
+        viewModel = FetchViewModel(fetchProvider, fetchEventLogger, savedStateHandle)
     }
 
     @Test

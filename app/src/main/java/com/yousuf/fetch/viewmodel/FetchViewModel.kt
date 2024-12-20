@@ -1,6 +1,7 @@
 package com.yousuf.fetch.viewmodel
 
 import android.os.Parcelable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
@@ -13,6 +14,7 @@ import com.yousuf.fetch.network.data.FetchResult
 import com.yousuf.fetch.provider.FetchEventLogger
 import com.yousuf.fetch.provider.FetchProvider
 import com.yousuf.fetch.viewmodel.FetchState.Empty
+import com.yousuf.fetch.viewmodel.FetchState.Error
 import com.yousuf.fetch.viewmodel.FetchState.Loading
 import com.yousuf.fetch.viewmodel.FetchState.Success
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,7 +31,7 @@ typealias RewardsAction = suspend () -> List<FetchResult>
 class FetchViewModel @Inject constructor(
     private val fetchProvider: FetchProvider,
     private val fetchEventLogger: FetchEventLogger,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     var fetchResults = getSavedFetchResults()
@@ -69,68 +71,80 @@ class FetchViewModel @Inject constructor(
             initLoadingState() //show loading state
             fetchAndProcessResults(rewardsAction)
             saveResults()
-            enableRetryState()
+            canRetry.enable()
         }
     }
 
     private suspend fun fetchAndProcessResults(rewardsAction: RewardsAction) {
         val startTime = TimeSource.Monotonic.markNow() // track start of the fetch call
 
-        val state = try {
+        try {
             rewardsAction.invoke()
                 .apply {
                     fetchResults.value = this.toFetchData()
                 }.let {
-                    if (it.isEmpty()) {
-                        fetchEventLogger.logInfo("received empty results...")
-                        fetchEventLogger.logInfo("transitioning to Empty state...")
-                        Empty
-                    } else {
-                        fetchEventLogger.logInfo("received results...")
-                        fetchEventLogger.logInfo("transitioning to Success state...")
-                        Success
-                    }
+                    fetchEventLogger.logInfo("received results...")
+                    addDelayIFNeeded(startTime)
+                    fetchState.next(empty = it.isEmpty(), success = it.isNotEmpty())
                 }
         } catch (e: FetchError) {
             fetchEventLogger.logError("received error results..., ${e.message.orEmpty()}")
             errorMessage.intValue = e.code
-
-            fetchEventLogger.logInfo("transitioning to Error state...")
-            FetchState.Error
+            addDelayIFNeeded(startTime)
+            fetchState.next(error = true)
         } catch (e: Exception) {
             fetchEventLogger.logError("received error results..., ${e.message.orEmpty()}")
             errorMessage.intValue = 100
+            addDelayIFNeeded(startTime)
+            fetchState.next(error = true)
+        }
+    }
 
+    private fun MutableState<FetchState>.next(
+        error: Boolean = false,
+        success: Boolean = false,
+        empty: Boolean = false,
+    ) {
+        if (empty) {
+            fetchEventLogger.logInfo("transitioning to Empty state...")
+            value = Empty
+        } else if (success) {
+            fetchEventLogger.logInfo("transitioning to Success state...")
+            value = Success
+        } else if (error) {
             fetchEventLogger.logInfo("transitioning to Error state...")
-            FetchState.Error
+            value = Error
+        } else {
+            fetchEventLogger.logInfo("transitioning to Loading state...")
+            value = Loading
         }
-
-        // update state and apply delay if needed.
-        updateState(state, startTime)
     }
 
-    // check if we should delay the state load to avoid jitter
-    private suspend fun updateState(state: FetchState, startTime: ValueTimeMark) {
-        val endTime = TimeSource.Monotonic.markNow() // track start of the fetch call
-        val duration = endTime - startTime // calculate the duration of the fetch call
-        if (duration.inWholeMilliseconds < 1000) {
-            // upon retry, the transition is too fast, producing a flickering effect.
-            // so introducing a delay to ensure the transition is smooth.
-            delay(1000)
-            fetchEventLogger.logInfo("mimic delay for smoother state transition...")
-        }
-        fetchState.value = state
+    private fun MutableState<Boolean>.enable() {
+        value = true
     }
 
-    private fun enableRetryState() {
-        canRetry.value = true
+    private fun MutableState<Boolean>.disable() {
+        value = false
     }
 
     private fun initLoadingState() {
         fetchEventLogger.logInfo("transitioning to loading state...")
-        fetchState.value = Loading
+        fetchState.next()
+        canRetry.disable()
         errorMessage.intValue = 0
-        canRetry.value = false
+    }
+
+    // check if we should delay the state load to avoid jitter
+    private suspend fun addDelayIFNeeded(startTime: ValueTimeMark) {
+        val endTime = TimeSource.Monotonic.markNow() // track start of the fetch call
+        val duration = endTime - startTime // calculate the duration of the fetch call
+        if (duration.inWholeMilliseconds < 1000) {
+            fetchEventLogger.logInfo("mimic delay for smoother state transition...")
+            // upon retry, the transition is too fast, producing a flickering effect.
+            // so introducing a delay to ensure the transition is smooth.
+            delay(1000)
+        }
     }
 
     private fun getSavedErrorCode() = mutableIntStateOf(
@@ -158,4 +172,6 @@ sealed class FetchState : Parcelable {
     object Success : FetchState()
     object Empty : FetchState()
     object Error : FetchState()
+//    object PartialLoad : FetchState()
+//    object PartialError : FetchState()
 }

@@ -13,7 +13,6 @@ private const val TAG = "Fetch-Rewards"
 @Composable
 fun HandleEventLogger() {
     LocalFetchEventLogger.current?.let {
-       // val scope = rememberCoroutineScope()
         ObserveAsEvents(flow = it.events) { event ->
             when (event.level) {
                     Level.Verbose -> Log.v(TAG, event.name)

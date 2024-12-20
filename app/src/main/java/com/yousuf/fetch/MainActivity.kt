@@ -25,13 +25,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
 import com.yousuf.fetch.provider.FetchEventLogger
 import com.yousuf.fetch.provider.LocalFetchEventLogger
 import com.yousuf.fetch.provider.LocalMessageDelegate
 import com.yousuf.fetch.provider.SnackbarDelegate
 import com.yousuf.fetch.ui.eventHandler.HandleEventLogger
 import com.yousuf.fetch.ui.eventHandler.HandleSnackbar
-import com.yousuf.fetch.ui.screen.FetchRewardsInfo
+import com.yousuf.fetch.ui.nav.FetchNavHost
 import com.yousuf.fetch.ui.theme.FetchAssesmentTheme
 import com.yousuf.fetch.viewmodel.FetchViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -44,7 +45,6 @@ class MainActivity : ComponentActivity() {
     lateinit var eventLogger: FetchEventLogger
     @Inject
     lateinit var snackbarEventDelegate: SnackbarDelegate
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,12 +60,11 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .background(color = MaterialTheme.colorScheme.background),
                         topBar = { Appbar() },
-                        snackbarHost = { SnackbarHost(snackbarHostState) }
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
                     ) { innerPadding ->
-                        FetchRewardsInfo(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
+                        FetchNavHost(
+                            modifier =  Modifier.fillMaxSize().padding(innerPadding),
+                            navController = rememberNavController()
                         )
                     }
                 }
@@ -76,7 +75,9 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Appbar(viewModel: FetchViewModel = hiltViewModel(key = "fetch")) {
+private fun Appbar(
+    viewModel: FetchViewModel = hiltViewModel(key="fetch")
+) {
     TopAppBar(
         modifier = Modifier
             .background(color = MaterialTheme.colorScheme.primary),

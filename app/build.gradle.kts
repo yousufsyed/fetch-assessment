@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.kotlin.serilization)
+
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
 }
@@ -54,8 +56,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
+    implementation(libs.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+
     implementation(libs.hilt)
     implementation(libs.hilt.viewmodel)
+    implementation(libs.androidx.hilt.navigation.fragment)
     ksp(libs.hilt.compiler)
 
     implementation(libs.retrofit)

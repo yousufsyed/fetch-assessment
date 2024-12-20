@@ -28,9 +28,7 @@ import com.yousuf.fetch.viewmodel.FetchViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FetchRewardsScreen(
-    viewModel: FetchViewModel = hiltViewModel(key = "fetch")
-) {
+fun FetchRewardsScreen(viewModel: FetchViewModel) {
     val list = rememberSaveable { viewModel.fetchResults.value }
 
     LazyColumn(
@@ -39,7 +37,6 @@ fun FetchRewardsScreen(
             .fillMaxSize()
             .padding(8.dp)
     ) {
-
         list.forEach { fetchData ->
 
             when (fetchData) {
